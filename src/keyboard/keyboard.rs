@@ -13,6 +13,23 @@ use teloxide::{
 use crate::commands::command::Command;
 use crate::dialogs::dialog::{start_handler, State};
 
+pub enum Token {
+    Btc,
+    Eth,
+    Sol,
+}
+
+impl Token {
+    fn to_string(token: &str) -> Option<Self> {
+        match token.to_uppercase().as_str() {
+            "BTC" => Some(Token::Btc),
+            "ETH" => Some(Token::Eth),
+            "SOL" => Some(Token::Sol),
+            _ => None,
+        }
+    }
+}
+
 pub async fn message_handler(
     bot: Bot,
     msg: Message,
@@ -31,9 +48,18 @@ pub async fn message_handler(
                     .await?;
             }
             Ok(Command::Token) => {
-                let token = match msg.text() {
-                    Some(token) => token.to_string(),
-                    None => "No token".to_string(),
+                let parts: Vec<&str> = text.split_whitespace().collect();
+                if parts.len() < 2 {
+                    bot.send_message(msg.chat.id, "Please provide a token")
+                        .await?;
+                    return Ok(());
+                }
+                let token = match Token::to_string(parts[1]) {
+                    Some(token) => token,
+                    None => {
+                        bot.send_message(msg.chat.id, "Invalid token").await?;
+                        return Ok(());
+                    }
                 };
                 bot.send_message(msg.chat.id, "Token info").await?;
             }
