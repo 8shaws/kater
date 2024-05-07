@@ -1,9 +1,12 @@
+use teloxide::dispatching::UpdateFilterExt;
 use teloxide::{dispatching::dialogue::InMemStorage, prelude::*};
 
 mod commands;
 mod dialogs;
+mod keyboard;
 use crate::commands::command::{answer, Command};
 use crate::dialogs::dialog::{start_handler, State};
+use crate::keyboard::keyboard::{callback_handler, inline_query_handler, message_handler};
 
 #[tokio::main]
 async fn main() {
@@ -13,24 +16,14 @@ async fn main() {
 
     let bot = Bot::from_env();
 
-    // teloxide::repl(bot, |bot: Bot, msg: Message| async move {
-    //     println!("{:?}", msg);
-    //     bot.send_message(msg.chat.id, "Hello!").send().await?;
-    //     Ok(())
-    // })
-    // .await;
+    let handler = dptree::entry()
+        .branch(Update::filter_message().endpoint(message_handler))
+        .branch(Update::filter_callback_query().endpoint(callback_handler))
+        .branch(Update::filter_inline_query().endpoint(inline_query_handler));
 
-    // Command::repl(bot.clone(), answer).await;
-
-    Dispatcher::builder(
-        bot,
-        Update::filter_message()
-            .enter_dialogue::<Message, InMemStorage<State>, State>()
-            .branch(dptree::case![State::Start].endpoint(start_handler)),
-    )
-    .dependencies(dptree::deps![InMemStorage::<State>::new()])
-    .enable_ctrlc_handler()
-    .build()
-    .dispatch()
-    .await;
+    Dispatcher::builder(bot, handler)
+        .enable_ctrlc_handler()
+        .build()
+        .dispatch()
+        .await;
 }

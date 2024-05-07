@@ -8,10 +8,10 @@ use teloxide::{prelude::*, utils::command::BotCommands};
 pub enum Command {
     #[command(description = "Get to know what we provide you with😊")]
     Help,
-    #[command(description = "handle a username.")]
-    Username(String),
-    #[command(description = "handle a username and an age.", parse_with = "split")]
-    UsernameAndAge { username: String, age: u8 },
+    #[command(description = "Start with configuring your account.")]
+    Start,
+    #[command(description = "Get token info")]
+    Token,
 }
 
 pub async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
@@ -20,17 +20,14 @@ pub async fn answer(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> 
             bot.send_message(msg.chat.id, Command::descriptions().to_string())
                 .await?
         }
-        Command::Username(username) => {
-            bot.send_message(msg.chat.id, format!("Your username is @{username}."))
-                .await?
-        }
-        Command::UsernameAndAge { username, age } => {
+        Command::Start => {
             bot.send_message(
                 msg.chat.id,
-                format!("Your username is @{username} and age is {age}."),
+                "Let's take your credentials and market interest info...",
             )
             .await?
         }
+        Command::Token => bot.send_message(msg.chat.id, "Token info").await?,
     };
 
     Ok(())
